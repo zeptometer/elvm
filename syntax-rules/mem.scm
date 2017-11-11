@@ -18,6 +18,11 @@
      (ck s (num-to-word! '(x ...) '(i y ...) '(z ...))))))
 
 ;;; Binary Lookup Table
+;; Constructor
+(define-syntax cons!
+  (syntax-rules (quote)
+    ((_ s 'x 'y) (ck s '(x . y)))))
+
 (define-syntax lookup!
   ;; (lookup! addr table) => table[addr]
   ;; note that $addr is little endian
@@ -27,10 +32,6 @@
     ((_ s '(1 . r) '(_ . d)) (ck s (lookup! 'r 'd)))
     ;; when memory is empty, return 0 (= '())
     ((_ s _ '()) (ck s '()))))
-
-(define-syntax cons!
-  (syntax-rules (quote)
-    ((_ s 'x 'y) (ck s '(x . y)))))
 
 (define-syntax update!
   ;; (update! addr val table) => table[addr] := val

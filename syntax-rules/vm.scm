@@ -32,8 +32,8 @@
 
 (define-syntax eval-ir!
   (syntax-rules (quote)
-    ((_ s reg '("reg" op)) (ck s (eval-r! reg 'op)))
-    ((_ s reg '("imed" i)) (ck s 'i))))
+    ((_ s reg '("REG" r)) (ck s (eval-r! reg 'r)))
+    ((_ s reg '("IMM" i)) (ck s 'i))))
 
 (define-syntax update-reg!
   (syntax-rules (quote)
@@ -64,76 +64,76 @@
 		    pc reg dmem imem i o)))
 
     ;; execute instruction
-    ((_ s '"exec" '("MOV" dst src) pc reg dmem imem i o)
-     (ck s (run-vm! '"load"
-		    (inc! pc '())
-		    (update-reg! reg dst (eval-ir! reg src))
+    ((_ s '"exec" '() pc reg dmem imem i o)
+     (ck s (run-vm! '"load"  (inc! pc) reg dmem imem i o)))
+
+    ((_ s '"exec" '(("MOV" dst src) . rest) pc reg dmem imem i o)
+     (ck s (run-vm! '"exec" 'rest
+		    pc (update-reg! reg 'dst (eval-ir! reg 'src))
 		    dmem imem i o)))
 
-    ((_ s '"exec" '("ADD" dst src) pc reg dmem imem i o)
-     (ck s (run-vm! '"load"
-		    (inc! pc '())
-		    (update-reg! reg dst (add! (eval-r! reg dst)
-					       (eval-ir! reg src)))
+    ((_ s '"exec" '(("ADD" dst src) . rest) pc reg dmem imem i o)
+     (ck s (run-vm! '"exec" 'rest
+		    pc
+		    (update-reg! reg 'dst (add! (eval-r! reg 'dst)
+					       (eval-ir! reg 'src)))
 		    dmem imem i o)))
 
-    ((_ s '"exec" '("SUB" dst src) pc reg dmem imem i o)
-     (ck s (run-vm! '"load"
-		    (inc! pc '())
-		    (update-reg! reg dst (sub! (eval-r! reg dst)
-					       (eval-ir! reg src)))
+    ((_ s '"exec" '(("SUB" dst src) . rest) pc reg dmem imem i o)
+     (ck s (run-vm! '"exec" 'rest
+		    pc
+		    (update-reg! reg 'dst (sub! (eval-r! reg 'dst)
+						(eval-ir! reg 'src)))
 		    dmem imem i o)))
 
-    ((_ s '"exec" '("LOAD" dst src) pc reg dmem imem i o)
-     (ck s (run-vm! '"load"
-		    (inc! pc '())
-		    (update-reg! reg dst
-				 (lookup! (num-to-addr! (eval-ir! reg src))
+    ((_ s '"exec" '(("LOAD" dst src) . rest) pc reg dmem imem i o)
+     (ck s (run-vm! '"exec" 'rest
+		    pc
+		    (update-reg! reg 'dst
+				 (lookup! (num-to-addr! (eval-ir! reg 'src))
 					  dmem))
 		    dmem imem i o)))
 
-    ((_ s '"exec" '("STORE" src dst) pc reg dmem imem i o)
-     (ck s (run-vm! '"load"
-		    (inc! pc '())
-		    reg
-		    (update! (num-to-addr (eval-ir! reg dst))
-			     (eval-r! reg src) dmem)
+    ((_ s '"exec" '(("STORE" src dst) . rest) pc reg dmem imem i o)
+     (ck s (run-vm! '"exec" 'rest
+		    pc reg
+		    (update! (num-to-addr (eval-ir! reg 'dst))
+			     (eval-r! reg 'src) dmem)
 		    imem i o)))
 
-    ((_ s '"exec" '("PUTC" src) pc reg dmem imem i o)
-     (ck s (run-vm! '"load" (inc! pc '()) reg dmem imem i
-		    (write! o (eval-ir! src)))))
+    ((_ s '"exec" '(("PUTC" src) . rest) pc reg dmem imem i o)
+     (ck s (run-vm! '"exec" 'rest
+		    pc reg dmem imem i
+		    (write! o (eval-ir! reg 'src)))))
 
-    ((_ s '"exec" '("GETC" dst) pc reg dmem imem i o)
-     (ck s (run-vm! '"load" (inc! pc '())
-		    (update-reg! reg dst (peek! i)) dmem imem
+    ((_ s '"exec" '(("GETC" dst) . rest) pc reg dmem imem i o)
+     (ck s (run-vm! '"exec" 'rest
+		    pc
+		    (update-reg! reg 'dst (peek! i)) dmem imem
 		    (pop! i) o)))
 
-    ((_ s '"exec" '("EXIT" jmp) pc reg dmem imem i o)
+    ((_ s '"exec" '(("EXIT" jmp) . _) _ _ _ _ _ o)
      ;; When the vm reach EXIT, it stops execution.
      ;; Therefore it does not call ck.
      (emit! o))
 
-    ((_ s '"exec" '("JCOND" op jmp dst src) pc reg dmem imem i o)
-     (ck s (run-vm! '"load" (if! (cmp! op (eval-ir! src reg)
-				       (eval-r! reg dst))
-				 (eval-ir! jmp)
-				 (inc! pc '()))
-		    reg dmem imem i o)))
+    ((_ s '"exec" '(("JCOND" op jmp dst src) . rest) pc reg dmem imem i o)
+     (ck s (if! (cmp! 'op (eval-ir! reg 'src) (eval-r! reg 'dst))
+		(run-vm! '"load" (eval-ir! reg 'jmp) reg dmem imem i o)
+		(run-vm! '"exec" 'rest pc reg dmem imem i o))))
 
-    ((_ s '"exec" '("JMP" jmp) pc reg dmem imem i o)
-     (ck s (run-vm! '"load" (eval-ir! jmp) reg dmem imem i o)))
+    ((_ s '"exec" '(("JMP" jmp) . _) pc reg dmem imem i o)
+     (ck s (run-vm! '"load" (eval-ir! reg 'jmp) reg dmem imem i o)))
 
-    ((_ s '"exec" '("CMP" op dst src)
-	pc reg dmem imem i o)
-     (ck s (run-vm! '"load"
-		    (inc! pc '())
-		    (update-reg! reg dst (cmp! op (eval-r! reg dst)
-					       (eval-ir! src reg)))
+    ((_ s '"exec" '(("CMP" op dst src) . rest) pc reg dmem imem i o)
+     (ck s (run-vm! '"exec" 'rest
+		    pc
+		    (update-reg! reg 'dst (cmp! 'op (eval-r! reg 'dst)
+						(eval-ir! reg 'src)))
 		    dmem imem i o)))
 
-    ((_ s '"exec" '("DUMP") pc reg dmem imem i o)
-     (ck s (run-vm! '"load" (inc! pc '()) reg dmem imem i o)))))
+    ((_ s '"exec" '(("DUMP") . rest) pc reg dmem imem i o)
+     (ck s (run-vm! '"exec" 'rest pc reg dmem imem i o)))))
 
 ;;; Emitter
 (define fold (fn l i)
