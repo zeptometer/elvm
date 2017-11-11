@@ -6,12 +6,17 @@ static void scm_sr_emit_file_prologue(void) {
   emit_line(scm_sr_lib);
 }
 
-static void scm_sr_emit_func_prologue() {
-  /* fixme */
+static void scm_sr_emit_func_prologue(int i) {
+  emit_line("(define-syntax func-impl%d!", i);
+  inc_indent();
+  emit_line("(syntax-rules (quote) ((_) (ck s '(");
+  inc_indent();
 }
 
 static void scm_sr_emit_func_epilogue() {
-  /* fixme */
+  dec_indent();
+  emit_line("))");
+  dec_indent();
 }
 
 static void scm_sr_emit_func_impl(Inst* inst) {
