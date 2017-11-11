@@ -100,6 +100,7 @@ ELC_SRCS := \
 	sed.c \
 	sh.c \
 	sqlite3.c \
+	scm_sr.c \
 	swift.c \
 	tex.c \
 	tf.c \
@@ -418,6 +419,11 @@ include target.mk
 
 TARGET := ll
 RUNNER := lli
+include target.mk
+
+TARGET := scm_sr
+RUNNER := tools/run_scm_sr.sh
+TOOL := gosh
 include target.mk
 
 test: $(TEST_RESULTS)
