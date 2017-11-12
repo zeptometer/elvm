@@ -130,10 +130,7 @@
 		    pc
 		    (update-reg! reg 'dst (cmp! 'op (eval-r! reg 'dst)
 						(eval-ir! reg 'src)))
-		    dmem imem i o)))
-
-    ((_ s '"exec" '(("DUMP") . rest) pc reg dmem imem i o)
-     (ck s (run-vm! '"exec" 'rest pc reg dmem imem i o)))))
+		    dmem imem i o)))))
 
 ;;; Emitter
 (define fold (fn l i)

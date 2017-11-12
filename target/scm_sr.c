@@ -159,9 +159,11 @@ static void scm_sr_emit_func_impl(Inst* inst) {
 }
 
 static int scm_sc_count_pc(Inst* inst) {
-  (void) inst;
-  return 0;
-  /* fixme */
+  int max_pc = 0;
+  for (; inst; inst = inst->next) {
+    max_pc = (max_pc > inst->pc)?max_pc:inst->pc;
+  }
+  return max_pc;
 }
 
 static void scm_sr_emit_inst_mem(int max_pc) {
