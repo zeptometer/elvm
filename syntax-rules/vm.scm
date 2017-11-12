@@ -50,11 +50,13 @@
 
 (define-syntax peek!
   (syntax-rules (quote)
-    ((_ s '(x _ ...)) (ck s 'x))))
+    ((_ s '(x _ ...)) (ck s 'x))
+    ((_ s '()) (ck s '()))))
 
 (define-syntax pop!
   (syntax-rules (quote)
-    ((_ s '(_ x ...)) (ck s '(x ...)))))
+    ((_ s '(_ x ...)) (ck s '(x ...)))
+    ((_ s '()) (ck s '()))))
 
 (define-syntax run-vm!
   (syntax-rules (quote)
