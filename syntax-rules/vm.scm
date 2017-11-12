@@ -104,7 +104,7 @@
     ((_ s '"exec" '(("PUTC" src) . rest) pc reg dmem imem i o)
      (ck s (run-vm! '"exec" 'rest
 		    pc reg dmem imem i
-		    (write! o (eval-ir! reg 'src)))))
+		    (write! o (num-to-byte! (eval-ir! reg 'src))))))
 
     ((_ s '"exec" '(("GETC" dst) . rest) pc reg dmem imem i o)
      (ck s (run-vm! '"exec" 'rest
@@ -112,7 +112,7 @@
 		    (update-reg! reg 'dst (peek! i)) dmem imem
 		    (pop! i) o)))
 
-    ((_ s '"exec" '(("EXIT" jmp) . _) _ _ _ _ _ o)
+    ((_ s '"exec" '(("EXIT") . _) _ _ _ _ _ o)
      ;; When the vm reach EXIT, it stops execution.
      ;; Therefore it does not call ck.
      (emit! o))
@@ -138,7 +138,7 @@
 	(else (fold fn (cdr l) (fn (car l) i)))))
 
 (define blist->num (blist)
-  (fold (lambda (x i) (+ x (* 2 i))) (reverse blist)))
+  (fold (lambda (x i) (+ x (* 2 i))) blist))
 
 (define-syntax emit!
   (syntax-rules (quote)

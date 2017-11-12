@@ -5,17 +5,27 @@
 ;; To reduce memory consumption, empty binary tree can be represented
 ;; just as an empty list.
 
-(define-syntax num-to-addr!
-  ;; Coerce little-endian number to 24-bit big-endian word
+(define-syntax num-to-big-endian-word!
+  ;; Coerce little-endian number to bid-endian word
+  ;; (for num-to-addr and num-to-byte)
   (syntax-rules (quote)
-    ;; optional arguament
-    ((_ s x) (ck s (num-to-word! x '() '(0 0 0 0 0 0 0 0
-					 0 0 0 0 0 0 0 0
-					 0 0 0 0 0 0 0 0))))
-    ;; main
     ((_ _ x '()) (ck s x))
     ((_ '(i x ...) '(y ...) '(0 z ...))
-     (ck s (num-to-word! '(x ...) '(i y ...) '(z ...))))))
+     (ck s (num-to-word! '(x ...) '(i y ...) '(z ...))))
+    ((_ '() '(y ...) '(0 z ...))
+     (ck s (num-to-word! '() '(0 y ...) '(z ...))))))
+
+(define-syntax num-to-addr!
+  (syntax-rules (quote)
+    ((_ s x) (ck s (num-to-big-endian-word! x '()
+                                            '(0 0 0 0 0 0 0 0
+                                              0 0 0 0 0 0 0 0
+                                              0 0 0 0 0 0 0 0))))))
+
+(define-syntax num-to-byte!
+  (syntax-rules (quote)
+    ((_ s x) (ck s (num-to-big-endian-word! x '() '(0 0 0 0 0 0 0 0))))))
+
 
 ;;; Binary Lookup Table
 ;; Constructor
