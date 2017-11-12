@@ -79,6 +79,14 @@ static char* scm_sr_imm_str(int imm) {
   }
 }
 
+static char* scm_sr_jmp_str(Inst* inst) {
+  if (inst->jmp.type == REG) {
+    return format("(\"REG\" %s)", reg_names[inst->jmp.reg]);
+  } else {
+    return format("(\"IMM\" (%s))", scm_sr_imm_str(inst->jmp.imm));
+  }
+}
+
 static char* scm_sr_src_str(Inst* inst) {
   if (inst->src.type == REG) {
     return format("(\"REG\" %s)", reg_names[inst->src.reg]);
@@ -135,15 +143,16 @@ static void scm_sr_emit_inst(Inst* inst) {
   case JGT:
   case JLE:
   case JGE:
-    emit_line("(\"JCOND\" %s %s %s)",
+    emit_line("(\"JCOND\" %s %s %s %s)",
               scm_sr_op_str(inst),
+              scm_sr_jmp_str(inst),
 	      reg_names[inst->dst.reg],
 	      scm_sr_src_str(inst));
     break;
 
   case JMP:
     emit_line("(\"JMP\" %s)",
-	      scm_sr_src_str(inst));
+              scm_sr_jmp_str(inst));
     break;
 
   default:
