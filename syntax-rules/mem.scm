@@ -1,6 +1,6 @@
 ;;; Word utilities
 (define-syntax num-to-big-endian-word!
-  ;; Coerce little-endian number to bid-endian word
+  ;; Coerce little-endian number to big-endian word
   ;; (for num-to-addr and num-to-byte)
   (syntax-rules (quote)
     ((_ _ x '()) (ck s x))
@@ -35,7 +35,7 @@
 
 (define-syntax lookup!
   ;; (lookup! addr table) => table[addr]
-  ;; note that $addr is little endian
+  ;; note that $addr is big endian
   (syntax-rules (quote)
     ((_ s '() d) (ck s d))
     ((_ s '(0 . r) '(d . _)) (ck s (lookup! 'r 'd)))

@@ -141,6 +141,7 @@ void parse(const char* code, vector<Op*>* ops) {
           op->op = c;
           break;
         }
+        /* falls through */
 
       default:
         delete op;

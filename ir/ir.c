@@ -423,6 +423,7 @@ static void parse_line(Parser* p, int c) {
         p->pc++;
         p->prev_boundary = true;
       }
+      /* falls through. */ 
     case MOV:
     case ADD:
     case SUB:
@@ -433,11 +434,13 @@ static void parse_line(Parser* p, int c) {
     case LE:
     case GE:
       p->text->src = args[1];
+      /* falls through. */ 
     case GETC:
       p->text->dst = args[0];
       break;
     case PUTC:
       p->text->src = args[0];
+      /* falls through. */ 
     case EXIT:
     case DUMP:
       break;
@@ -449,6 +452,7 @@ static void parse_line(Parser* p, int c) {
     case JGE:
       p->text->dst = args[1];
       p->text->src = args[2];
+      /* falls through. */ 
     case JMP:
       p->text->jmp = args[0];
       p->pc++;
