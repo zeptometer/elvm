@@ -3,19 +3,14 @@
 (define-syntax ck
   (syntax-rules (quote)
     ((_ () 'v) 'v)
-
     ((_ (((op ...) ea ...) . s) 'v)
      (ck s "arg" (op ... 'v) ea ...))
-
     ((_ s "arg" (op va ...))
      (op s va ...))
-
     ((_ s "arg" (op ...) 'v ea1 ...)
      (ck s "arg" (op ... 'v) ea1 ...))
-
     ((_ s "arg" (op ...) ea ea1 ...)
      (ck (((op ...) ea1 ...) . s) ea))
-
     ((_ s (op ea ...))
      (ck s "arg" (op) ea ...))))
 
@@ -55,9 +50,9 @@
     ((_ s '() _)
      (syntax-error "error: underflow"))
     ((_ s '(0 x ...) '(y ...))
-     (ck s (dec! '(x ...) '(y ... 1))))
+     (dec! s '(x ...) '(y ... 1)))
     ((_ s '(1 x ...) '(y ...))
-     (ck s (normalize! '(y ... 0 x ...))))))
+     (normalize! s '(y ... 0 x ...)))))
 
 (define-syntax add!
   ;; (add! x y) => x + y
@@ -268,7 +263,7 @@
 
 (define-syntax eval-ir!
   (syntax-rules (quote)
-    ((_ s reg '("REG" r)) (ck s (eval-r! reg 'r)))
+    ((_ s reg '("REG" r)) (eval-r! s reg 'r))
     ((_ s reg '("IMM" i)) (ck s 'i))))
 
 (define-syntax update-reg!
