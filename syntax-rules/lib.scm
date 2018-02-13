@@ -25,10 +25,10 @@
   ;; remove trailing zeros
   ;; (normalize! '(1 0 0 0 )) => '(1)
   (syntax-rules (quote)
-    ; optional argument
+					; optional argument
     ((_ s x)
      (normalize! s x '()))
-    ; main
+					; main
     ((_ s '(0 ...) x)
      (ck s x))
     ((_ s '(i x ...) '(y ...))
