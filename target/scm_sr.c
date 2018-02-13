@@ -8,7 +8,7 @@ static void scm_sr_emit_file_prologue(void) {
 
 static void scm_sr_emit_file_epilogue(void) {
   emit_line(";;; Load Input");
-  emit_line("(load \"input.scm\")");
+  emit_line("(load \"./input.scm\")");
   emit_line(";;; Run VM!");
   emit_line("(ck () (run-vm! '\"load\" '() '(() () () () () ())");
   emit_line("                (dmem-init!) (imem-init!)");
@@ -18,7 +18,7 @@ static void scm_sr_emit_file_epilogue(void) {
 static void scm_sr_emit_func_prologue(int i) {
   emit_line("(define-syntax func-impl%d!", i);
   inc_indent();
-  emit_line("(syntax-rules (quote) ((_) (ck s '(");
+  emit_line("(syntax-rules (quote) ((_ s) (ck s '(");
   inc_indent();
 }
 
@@ -189,7 +189,7 @@ static void scm_sr_emit_inst_mem_rec(int max_pc, int from, int to) {
   if (max_pc < from) {
     emit_line("'()");
   } else if (from + 1 >= to) {
-    emit_line("(func_impl%d!)", from);
+    emit_line("(func-impl%d!)", from);
   } else {
     int mid = (from + to)/2;
     emit_line("(cons!");
