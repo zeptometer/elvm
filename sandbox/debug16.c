@@ -1,8 +1,12 @@
-#include <stdio.h>
+int putchar(int);
 
-void test(int val, int expected) {
-  printf("%c -> %c\n", (expected?'T':'F'), (val?'T':'F'));
-}
+#define test(a, b) do {\
+    putchar('0' + (a));				\
+    putchar('=');				\
+    putchar('>');				\
+    putchar('0' + (b));				\
+    putchar('\n');				\
+  } while (0)
 
 int main() {
   test(1231 != 1231, 0);

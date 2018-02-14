@@ -10,7 +10,7 @@ static void scm_sr_emit_file_epilogue(void) {
   emit_line(";;; Load Input");
   emit_line("(load \"./input.scm\")");
   emit_line(";;; Run VM!");
-  emit_line("(ck () (run-vm! '\"load\" '() '(() () () () () ())");
+  emit_line("(ck () (run-vm! '\"load\" '0 '(0 0 0 0 0 0)");
   emit_line("                (dmem-init!) (imem-init!)");
   emit_line("                (input!) '()))");
 }
@@ -73,9 +73,9 @@ static char* scm_sr_imm_str(int imm) {
   }
 
   if (imm == 0) {
-    return "";
+    return "0";
   } else {
-    return format("%d %s", imm & 1, scm_sr_imm_str(imm >> 1));
+    return format("(%d . %s)", imm & 1, scm_sr_imm_str(imm >> 1));
   }
 }
 
@@ -83,7 +83,7 @@ static char* scm_sr_jmp_str(Inst* inst) {
   if (inst->jmp.type == REG) {
     return format("(\"REG\" %s)", reg_names[inst->jmp.reg]);
   } else {
-    return format("(\"IMM\" (%s))", scm_sr_imm_str(inst->jmp.imm));
+    return format("(\"IMM\" %s)", scm_sr_imm_str(inst->jmp.imm));
   }
 }
 
@@ -91,7 +91,7 @@ static char* scm_sr_src_str(Inst* inst) {
   if (inst->src.type == REG) {
     return format("(\"REG\" %s)", reg_names[inst->src.reg]);
   } else {
-    return format("(\"IMM\" (%s))", scm_sr_imm_str(inst->src.imm));
+    return format("(\"IMM\" %s)", scm_sr_imm_str(inst->src.imm));
   }
 }
 
@@ -224,7 +224,7 @@ static void scm_sr_emit_data_mem_rec(Data* data, int from, int to) {
   if (data == NULL) {
     emit_line("()");
   } else if (from + 1 >= to) {
-    emit_line("(%s)", scm_sr_imm_str(data->v));
+    emit_line("%s", scm_sr_imm_str(data->v));
   } else {
     int mid = (from + to)/2;
     emit_line("(");

@@ -17,109 +17,126 @@
 ;;; Arighmetic Functions
 
 ;; Natural numbers are represented in little-endian 01 list
-;; ex: 0  = ()
-;;     4  = (0 0 1)
-;;     13 = (1 0 1 1)
+;; 0 stands for an infinite list (0 0 ...)
+;; and 1 represents an infinite list (1 1 ...)
+;; -x is defined as ~x + 1
+;;
+;; ex: 0  = 0
+;;     4  = (0 0 1 . 0)
+;;     13 = (1 0 1 1 . 0)
+;;     -1 = 1
+;;     -2 = (0 . 1)
 
-(define-syntax normalize!
-  ;; remove trailing zeros
-  ;; (normalize! '(1 0 0 0 )) => '(1)
+(define-syntax flip!
   (syntax-rules (quote)
-					; optional argument
+    ;; optional
     ((_ s x)
-     (normalize! s x '()))
-					; main
-    ((_ s '(0 ...) x)
-     (ck s x))
-    ((_ s '(i x ...) '(y ...))
-     (normalize! s '(x ...) '(y ... i)))))
+     (flip! s x '()))
+    ;; main
+    ((_ s '0 '(y ...))
+     (ck s '(y ... . 1)))
+    ((_ s '1 '(y ...))
+     (ck s '(y ... . 0)))
+    ((_ s '(0 . xs) '(y ...))
+     (flip! s 'xs '(y ... 1)))
+    ((_ s '(1 . xs) '(y ...))
+     (flip! s 'xs '(y ... 0)))))
 
 (define-syntax inc!
+  ;; (inc! x)   => x + 1
   ;; (inc! x y) => y ++ (x + 1)
   (syntax-rules (quote)
     ;; optional
     ((_ s x)
      (inc! s x '()))
     ;; main
-    ((_ s '() '(y ...))
-     (ck s '(y ... 1)))
-    ((_ s '(0 x ...) '(y ...))
-     (ck s '(y ... 1 x ...)))
-    ((_ s '(1 x ...) '(y ...))
-     (inc! s '(x ...) '(y ... 0)))))
+    ((_ s '0 '(y ...))
+     (ck s '(y ... 1 . 0)))
+    ((_ s '1 '(y ...))
+     (ck s '(y ... . 0)))
+    ((_ s '(0 . xs) '(y ...))
+     (ck s '(y ... 1 . xs)))
+    ((_ s '(1 . xs) '(y ...))
+     (inc! s 'xs '(y ... 0)))))
 
 (define-syntax dec!
+  ;; (dec! x)   => x - 1
   ;; (dec! x y) => y ++ (x - 1)
   (syntax-rules (quote)
-    ((_ s '() _)
-     (syntax-error "error: underflow"))
-    ((_ s '(0 x ...) '(y ...))
-     (dec! s '(x ...) '(y ... 1)))
-    ((_ s '(1 x ...) '(y ...))
-     (normalize! s '(y ... 0 x ...)))))
+    ;; optional
+    ((_ s x)
+     (dec! s x '()))
+    ;; main
+    ((_ s '0 '(y ...))
+     (ck s '(y ... . 1)))
+    ((_ s '1 '(y ...))
+     (ck s '(y ... 0 . 1)))
+    ((_ s '(0 . xs) '(y ...))
+     (dec! s 'xs '(y ... 1)))
+    ((_ s '(1 . xs) '(y ...))
+     (ck  s '(y ... 0 . xs)))))
 
 (define-syntax add!
   ;; (add! x y) => x + y
+  ;; (add! x y carry rest) => rest ++ (x + y + carry?1:0)
   (syntax-rules (quote)
     ;;; initialize
-    ((_ s x y) (add! s x y '0 '()))
+    ((_ s x y) (add! s x y '#f '()))
     ;;; corner case
-    ((_ s '() '(y ...) '0 '(z ...))
-     (ck s '(z ... y ...)))
-    ((_ s '(x ...) '() '0 '(z ...))
-     (ck s '(z ... x ...)))
-    ((_ s '() 'ys '1 'zs)
+    ((_ s '0 '0 '#f '(z ...))
+     (ck s '(z ... . 0)))
+    ((_ s '0 '0 '#t '(z ...))
+     (ck s '(z ... 1 . 0)))
+    ((_ s '1 '1 '#f '(z ...))
+     (ck s '(z ... 0 . 1)))
+    ((_ s '1 '1 '#t '(z ...))
+     (ck s '(z ... . 1)))
+    ((_ s '0 '1 '#f '(z ...))
+     (ck s '(z ... . 1)))
+    ((_ s '1 '0 '#f '(z ...))
+     (ck s '(z ... . 1)))
+    ((_ s '0 '1 '#t '(z ...))
+     (ck s '(z ... . 0)))
+    ((_ s '1 '0 '#t '(z ...))
+     (ck s '(z ... . 0)))
+    ((_ s '0 'ys '#f '(z ...))
+     (ck s '(z ... . ys)))
+    ((_ s 'xs '0 '#f '(z ...))
+     (ck s '(z ... . xs)))
+    ((_ s '0 'ys '#t 'zs)
      (inc! s 'ys 'zs))
-    ((_ s 'xs '() '1 'zs)
+    ((_ s 'xs '0 't 'zs)
      (inc! s 'xs 'zs))
+    ((_ s '1 'ys '#f 'zs)
+     (dec! s 'ys 'zs))
+    ((_ s 'xs '1 '#f 'zs)
+     (dec! s 'xs 'zs))
+    ((_ s '1 'ys '#t '(z ...))
+     (ck s '(z ... . ys)))
+    ((_ s 'xs '1 '#t '(z ...))
+     (ck s '(z ... . xs)))
     ;;; general case
-    ((_ s '(0 . x) '(0 . y) '0 '(buf ...))
-     (add! s 'x 'y '0 '(buf ... 0)))
-    ((_ s '(1 . x) '(0 . y) '0 '(buf ...))
-     (add! s 'x 'y '0 '(buf ... 1)))
-    ((_ s '(0 . x) '(1 . y) '0 '(buf ...))
-     (add! s 'x 'y '0 '(buf ... 1)))
-    ((_ s '(1 . x) '(1 . y) '0 '(buf ...))
-     (add! s 'x 'y '1 '(buf ... 0)))
-    ((_ s '(0 . x) '(0 . y) '1 '(buf ...))
-     (add! s 'x 'y '0 '(buf ... 1)))
-    ((_ s '(1 . x) '(0 . y) '1 '(buf ...))
-     (add! s 'x 'y '1 '(buf ... 0)))
-    ((_ s '(0 . x) '(1 . y) '1 '(buf ...))
-     (add! s 'x 'y '1 '(buf ... 0)))
-    ((_ s '(1 . x) '(1 . y) '1 '(buf ...))
-     (add! s 'x 'y '1 '(buf ... 1)))))
+    ((_ s '(0 . x) '(0 . y) '#f '(buf ...))
+     (add! s 'x 'y '#f '(buf ... 0)))
+    ((_ s '(1 . x) '(0 . y) '#f '(buf ...))
+     (add! s 'x 'y '#f '(buf ... 1)))
+    ((_ s '(0 . x) '(1 . y) '#f '(buf ...))
+     (add! s 'x 'y '#f '(buf ... 1)))
+    ((_ s '(1 . x) '(1 . y) '#f '(buf ...))
+     (add! s 'x 'y '#t '(buf ... 0)))
+    ((_ s '(0 . x) '(0 . y) '#t '(buf ...))
+     (add! s 'x 'y '#f '(buf ... 1)))
+    ((_ s '(1 . x) '(0 . y) '#t '(buf ...))
+     (add! s 'x 'y '#t '(buf ... 0)))
+    ((_ s '(0 . x) '(1 . y) '#t '(buf ...))
+     (add! s 'x 'y '#t '(buf ... 0)))
+    ((_ s '(1 . x) '(1 . y) '#t '(buf ...))
+     (add! s 'x 'y '#t '(buf ... 1)))))
 
 (define-syntax sub!
-  ;; (sub! x y) => x - y when x >= y
-  ;;            |  error otherwise
   (syntax-rules (quote)
-    ;; initialize
-    ((_ s x y) (sub! s x y '0 '()))
-    ;; corner case
-    ((_ s '(x ...) '() '0 '(z ...))
-     (ck s (normalize! '(z ... x ...))))
-    ((_ s '() '(y ...) _ __)
-     (syntax-error "error: underflow"))
-    ((_ s 'xs '() '1 'zs)
-     (ck s (dec! 'xs 'zs)))
-    ;; general case
-    ((_ s '(0 . x) '(0 . y) '0 '(buf ...))
-     (sub! s 'x 'y '0 '(buf ... 0)))
-    ((_ s '(1 . x) '(0 . y) '0 '(buf ...))
-     (sub! s 'x 'y '0 '(buf ... 1)))
-    ((_ s '(0 . x) '(1 . y) '0 '(buf ...))
-     (sub! s 'x 'y '1 '(buf ... 1)))
-    ((_ s '(1 . x) '(1 . y) '0 '(buf ...))
-     (sub! s 'x 'y '0 '(buf ... 0)))
-    ((_ s '(0 . x) '(0 . y) '1 '(buf ...))
-     (sub! s 'x 'y '1 '(buf ... 1)))
-    ((_ s '(1 . x) '(0 . y) '1 '(buf ...))
-     (sub! s 'x 'y '0 '(buf ... 0)))
-    ((_ s '(0 . x) '(1 . y) '1 '(buf ...))
-     (sub! s 'x 'y '1 '(buf ... 0)))
-    ((_ s '(1 . x) '(1 . y) '1 '(buf ...))
-     (sub! s 'x 'y '1 '(buf ... 1)))))
+    ((_ s x y)
+     (ck s (add! x (inc! (flip! y)))))))
 
 (define-syntax cmp%!
   ;; (cmp%! 'x 'y) => '((x <= y) (x < y))
@@ -130,26 +147,40 @@
      (cmp%! s x y '"="))
     ;; main
     ;; when x and y are of same width
-    ((_ s '() '() '"=")
+    ((_ s '0 '0 '"=")
      (ck s '(1 0)))
-    ((_ s '() '() '"<")
+    ((_ s '0 '0 '"<")
      (ck s '(1 1)))
-    ((_ s '() '() '">")
+    ((_ s '0 '0 '">")
      (ck s '(0 0)))
+    ((_ s '1 '1 '"=")
+     (ck s '(1 0)))
+    ((_ s '1 '1 '"<")
+     (ck s '(1 1)))
+    ((_ s '1 '1 '">")
+     (ck s '(0 0)))
+    ((_ s '0 '1 _)
+     (ck s '(0 0)))
+    ((_ s '1 '0 _)
+     (ck s '(1 1)))
     ;; when different width
-    ((_ s '() _ __)
-     (ck s '(1 1)))
-    ((_ s _ '() __)
-     (ck s '(0 0)))
+    ((_ s '0 y f)
+     (cmp%! s '(0 . 0) y f))
+    ((_ s x '0 f)
+     (cmp%! s x '(0 . 0) f))
+    ((_ s '1 y f)
+     (cmp%! s '(1 . 1) y f))
+    ((_ s x '1 f)
+     (cmp%! s x '(1 . 1) f))
     ;; recursion
-    ((_ s '(0 x ...) '(0 y ...) c)
-     (cmp%! s '(x ...) '(y ...) c))
-    ((_ s '(1 x ...) '(1 y ...) c)
-     (cmp%! s '(x ...) '(y ...) c))
-    ((_ s '(0 x ...) '(1 y ...) _)
-     (cmp%! s '(x ...) '(y ...) '"<"))
-    ((_ s '(1 x ...) '(0 y ...) _)
-     (cmp%! s '(x ...) '(y ...) '">"))))
+    ((_ s '(0 . xs) '(0 . ys) c)
+     (cmp%! s 'xs 'ys c))
+    ((_ s '(1 . xs) '(1 . ys) c)
+     (cmp%! s 'xs 'ys c))
+    ((_ s '(0 . xs) '(1 . ys) _)
+     (cmp%! s 'xs 'ys '"<"))
+    ((_ s '(1 . xs) '(0 . ys) _)
+     (cmp%! s 'xs 'ys '">"))))
 
 (define-syntax cmp!
   ;; (cmp! op x y)
@@ -161,21 +192,21 @@
     ((_ s op x y)
      (ck s (cmp! op (cmp%! x y))))
     ;; main
-    ((_ s '"EQ" '(1 0)) (ck s '(1)))
-    ((_ s '"NE" '(0 _)) (ck s '(1)))
-    ((_ s '"NE" '(1 1)) (ck s '(1)))
-    ((_ s '"LT" '(_ 1)) (ck s '(1)))
-    ((_ s '"LE" '(1 _)) (ck s '(1)))
-    ((_ s '"GT" '(0 _)) (ck s '(1)))
-    ((_ s '"GE" '(_ 0)) (ck s '(1)))
-    ((_ s _ __)         (ck s '()))))
+    ((_ s '"EQ" '(1 0)) (ck s '(1 . 0)))
+    ((_ s '"NE" '(0 _)) (ck s '(1 . 0)))
+    ((_ s '"NE" '(1 1)) (ck s '(1 . 0)))
+    ((_ s '"LT" '(_ 1)) (ck s '(1 . 0)))
+    ((_ s '"LE" '(1 _)) (ck s '(1 . 0)))
+    ((_ s '"GT" '(0 _)) (ck s '(1 . 0)))
+    ((_ s '"GE" '(_ 0)) (ck s '(1 . 0)))
+    ((_ s _ __)         (ck s '0))))
 
 (define-syntax if!
   ;; (if! bool then else)
   ;; => else when bool == 0
   ;;    then otherwise
   (syntax-rules (quote)
-    ((_ s '() 'then 'else) (ck s else))
+    ((_ s '0 'then 'else) (ck s else))
     ((_ s _   'then 'else) (ck s then))))
 
 ;;; Word utilities
@@ -184,10 +215,12 @@
   ;; (for num-to-addr and num-to-byte)
   (syntax-rules (quote)
     ((_ s _ x '()) (ck s x))
-    ((_ s '(i x ...) '(y ...) '(0 z ...))
-     (num-to-word! s '(x ...) '(i y ...) '(z ...)))
-    ((_ s '() '(y ...) '(0 z ...))
-     (num-to-word! s '() '(0 y ...) '(z ...)))))
+    ((_ s '(i . xs) '(y ...) '(0 z ...))
+     (num-to-word! s 'xs '(i y ...) '(z ...)))
+    ((_ s '0 '(y ...) '(0 z ...))
+     (num-to-word! s '0 '(0 y ...) '(z ...)))
+    ((_ s '1 '(y ...) '(0 z ...))
+     (num-to-word! s '1 '(1 y ...) '(z ...)))))
 
 (define-syntax num-to-addr!
   (syntax-rules (quote)
@@ -384,3 +417,11 @@
      (for-each (lambda (blist) (write-char (integer->char
 					    (blist->num blist))))
 	       o))))
+
+;; (display (ck () (add! '(1 1 . 0) '(0 0 1 . 0))))
+;; (newline)
+;; (display (ck () (add! '1 '(0 0 1 . 0))))
+;; (newline)
+;; (display (ck () (sub! '(1 1 . 0) '(0 0 1 . 0))))
+;; (newline)
+
