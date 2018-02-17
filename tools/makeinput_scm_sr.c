@@ -21,9 +21,14 @@ main() {
   char c;
   while ((c = getchar()) != EOF) {
     char buff[100];
-    to_binary(c, buff);
-    printf("                   (%s)\n", buff);
+    if (c == 0) {
+      printf("                   0\n");
+    } else {
+      to_binary(c, buff);
+      printf("                   (%s. 0)\n", buff);
+    }
   }
-  
+
+  printf("                   1\n");
   printf("                  )))))\n");
 }

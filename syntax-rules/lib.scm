@@ -319,7 +319,7 @@
 (define-syntax peek!
   (syntax-rules (quote)
     ((_ s '(x _ ...)) (ck s 'x))
-    ((_ s '()) (ck s '()))))
+    ((_ s '()) (ck s '0))))
 
 (define-syntax pop!
   (syntax-rules (quote)
