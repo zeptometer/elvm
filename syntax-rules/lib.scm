@@ -165,7 +165,6 @@
     ((_ s _   'then 'else) (ck s then))))
 
 ;;; Word utilities
-;; fixme?
 (define-syntax num-to-word!
   ;; Coerce little-endian number to big-endian word
   ;; (for num-to-addr and num-to-byte)
@@ -199,6 +198,11 @@
 (define-syntax cons!
   (syntax-rules (quote)
     ((_ s 'x 'y) (ck s '(x . y)))))
+
+(define-syntax list!
+  (syntax-rules (quote)
+    ((_ s) (ck s '()))
+    ((_ s x y ...) (ck s (cons! x (list! y ...))))))
 
 (define-syntax lookup!
   ;; (lookup! addr table) => table[addr]
@@ -376,13 +380,4 @@
 (define init-reg!
   (syntax-rules (quote)
     ((_ s)
-     (ck s (cons! (zero!) (cons! (zero!) (cons! (zero!) (cons! (zero!) (cons! (zero!) (cons! (zero!) '()))))))))))
-
-;; (display (ck () (add! '(1 1 . 0) '(0 0 1 . 0))))
-;; (newline)
-;; (display (ck () (add! '1 '(0 0 1 . 0))))
-;; (newline)
-;; (display (ck () (sub! '(1 1 . 0) '(0 0 1 . 0))))
-;; (newline)
-
-
+     (ck s (list! (zero!) (zero!) (zero!) (zero!) (zero!) (zero!))))))
