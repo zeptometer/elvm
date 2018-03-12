@@ -422,7 +422,7 @@ RUNNER := lli
 include target.mk
 
 TARGET := scm_sr
-RUNNER := tools/run_scm_sr.sh
+RUNNER := tools/runscm_sr.sh
 TOOL := gosh
 include target.mk
 
